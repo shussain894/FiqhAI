@@ -2,8 +2,9 @@
 .env
 .env.*
 
-# Documentation
+# Documentation (exclude all except README)
 *.md
+!README.md
 
 # Python
 __pycache__/
