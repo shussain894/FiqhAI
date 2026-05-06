@@ -34,7 +34,7 @@ ENV/
 Thumbs.db
 
 # Data — raw source files (PDFs may be copyrighted)
-data/raw/*.pdf
+data/raw/pdf/*.pdf
 
 # Generated pipeline outputs (excluded, too large / machine-generated)
 data/processed/extracted_text/*.json
