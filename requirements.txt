@@ -1,0 +1,27 @@
+# PDF extraction
+pymupdf==1.24.5
+
+# Vector database
+chromadb==0.5.3
+
+# Embeddings
+sentence-transformers==3.0.1
+
+# Ollama Python client (for Gemma)
+ollama==0.3.0
+
+# Schema validation
+pydantic==2.7.4
+
+# Environment variables
+python-dotenv==1.0.1
+
+# Testing
+pytest==8.2.2
+
+# Progress bars
+tqdm==4.66.4
+
+# API (Phase 2+)
+fastapi==0.111.0
+uvicorn==0.30.1
