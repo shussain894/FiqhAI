@@ -19,6 +19,7 @@ import ollama
 from dotenv import load_dotenv
 
 from src.generation.schema import parse_markdown_answer
+from src.retrieval.rerank import rerank
 from src.retrieval.rewrite import rewrite_query
 
 load_dotenv()
@@ -120,8 +121,9 @@ def generate_answer(query: str, context: str, model_name: str = GEMMA_MODEL) -> 
 
 def run_rag_query(
     query: str,
-    model,          # SentenceTransformer model
-    collection,     # ChromaDB collection
+    model,              # SentenceTransformer model
+    collection,         # ChromaDB collection
+    reranker=None,      # CrossEncoder model, or None to skip reranking
     top_k: int = 5,
     topic_filter: str | None = None,
     llm_model: str = GEMMA_MODEL
@@ -129,13 +131,13 @@ def run_rag_query(
     """
     Full RAG pipeline:
       1. Safety check the query
-      2. Retrieve top-k relevant chunks
-      3. Format context
-      4. Generate answer with Gemma
+      2. Rewrite query for better retrieval
+      3. Retrieve candidate chunks from ChromaDB
+      4. Rerank candidates with cross-encoder (if reranker provided)
+      5. Format context and generate answer with Gemma
 
     Returns a dict with the answer, retrieved sources, and query metadata.
     """
-    # Import here to avoid circular dependency
     from src.retrieval.retrieve import retrieve, format_for_prompt
 
     # Step 1 — safety check
@@ -152,13 +154,18 @@ def run_rag_query(
     # Step 2 — rewrite query for better retrieval, keep original for generation
     retrieval_query = rewrite_query(query, model_name=llm_model)
 
-    # Step 3 — retrieve relevant chunks using the rewritten query
-    results = retrieve(retrieval_query, model, collection, top_k=top_k, topic_filter=topic_filter)
+    # Step 3 — retrieve a larger candidate set when reranking, otherwise top_k
+    candidate_k = top_k * 2 if reranker is not None else top_k
+    results = retrieve(retrieval_query, model, collection, top_k=candidate_k, topic_filter=topic_filter)
 
-    # Step 4 — format context for prompt
+    # Step 4 — rerank candidates down to top_k (skipped if no reranker)
+    if reranker is not None:
+        results = rerank(query, results, reranker, top_k=top_k)
+
+    # Step 5 — format context for prompt
     context = format_for_prompt(results)
 
-    # Step 5 — generate answer using the original query (not the rewritten one)
+    # Step 6 — generate answer using the original query (not the rewritten one)
     answer = generate_answer(query, context, model_name=llm_model)
 
     return {

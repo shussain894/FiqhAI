@@ -76,8 +76,9 @@ def run_setup():
 # ---------------------------------------------------------------------------
 
 def load_pipeline():
-    """Loads the retriever (embedding model + ChromaDB collection)."""
+    """Loads the retriever (embedding model + ChromaDB collection) and reranker."""
     from src.retrieval.retrieve import load_retriever
+    from src.retrieval.rerank import load_reranker
 
     chroma_dir = Path("data/chroma")
     if not chroma_dir.exists():
@@ -93,8 +94,11 @@ def load_pipeline():
         print("Run 'python main.py --setup' first.\n")
         sys.exit(1)
 
+    print("Loading reranker...")
+    reranker = load_reranker()
+
     print(f"Ready. Index contains {collection.count()} chunks.\n")
-    return model, collection
+    return model, collection, reranker
 
 
 def print_answer(result: dict):
@@ -128,7 +132,8 @@ def print_answer(result: dict):
 
         print("\n--- Sources retrieved ---")
         for i, s in enumerate(result["sources"], 1):
-            print(f"  [{i}] {s['source_title']} p.{s['page']} | {s['topic']} | score={s['score']}")
+            rerank_score = f" | rerank={s['rerank_score']}" if "rerank_score" in s else ""
+            print(f"  [{i}] {s['source_title']} p.{s['page']} | {s['topic']} | score={s['score']}{rerank_score}")
 
     print("=" * 70 + "\n")
 
@@ -137,9 +142,9 @@ def run_single_query(query: str):
     """Runs a single query and prints the result."""
     from src.generation.generate import run_rag_query
 
-    model, collection = load_pipeline()
+    model, collection, reranker = load_pipeline()
     print(f"Querying: {query}\n")
-    result = run_rag_query(query, model, collection)
+    result = run_rag_query(query, model, collection, reranker=reranker)
     print_answer(result)
 
 
@@ -155,7 +160,7 @@ def run_interactive():
     print("This assistant answers from retrieved Hanafi source texts only.")
     print("It is not a mufti and does not issue binding fatwas.\n")
 
-    model, collection = load_pipeline()
+    model, collection, reranker = load_pipeline()
 
     while True:
         try:
@@ -172,7 +177,7 @@ def run_interactive():
             break
 
         print("\nSearching sources and generating answer...\n")
-        result = run_rag_query(query, model, collection)
+        result = run_rag_query(query, model, collection, reranker=reranker)
         print_answer(result)
 
 
