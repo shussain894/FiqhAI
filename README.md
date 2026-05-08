@@ -61,7 +61,7 @@ Copy the example below and save it as `.env` in the project root:
 ```env
 # Ollama
 OLLAMA_BASE_URL=http://localhost:11434
-GEMMA_MODEL=gemma4:e4b
+GEMMA_MODEL=gemma2:2b
 
 # Embeddings
 EMBEDDING_MODEL=all-MiniLM-L6-v2
@@ -84,7 +84,7 @@ Update `GEMMA_MODEL` to match whatever model you have pulled in Ollama.
 Make sure Ollama is running, then pull your model:
 
 ```bash
-ollama pull gemma4:e4b
+ollama pull gemma2:2b
 ```
 
 To see what models you have available:
@@ -212,7 +212,7 @@ Note: generation tests require Ollama to be running with the configured model av
 
 | Component | Tool |
 |---|---|
-| Local LLM | Gemma via Ollama |
+| Local LLM | Gemma 2 2B via Ollama (`gemma2:2b`) |
 | Embeddings | all-MiniLM-L6-v2 (sentence-transformers) |
 | Vector DB | ChromaDB |
 | PDF extraction | PyMuPDF |
