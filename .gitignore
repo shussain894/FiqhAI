@@ -47,6 +47,9 @@ data/qa/*.jsonl
 chroma_db/
 data/chroma/
 
+# Instructions / internal docs
+instructions/
+
 # Logs
 *.log
 logs/

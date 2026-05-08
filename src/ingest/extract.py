@@ -20,7 +20,7 @@ import json
 import os
 from pathlib import Path
 
-import fitz  # PyMuPDF
+import pymupdf as fitz
 from dotenv import load_dotenv
 
 load_dotenv()
