@@ -18,6 +18,8 @@ from pathlib import Path
 import ollama
 from dotenv import load_dotenv
 
+from src.generation.schema import parse_markdown_answer
+
 load_dotenv()
 
 GEMMA_MODEL = os.getenv("GEMMA_MODEL", "gemma:4b")
@@ -156,6 +158,7 @@ def run_rag_query(
     return {
         "query": query,
         "answer": answer,
+        "structured_answer": parse_markdown_answer(answer),
         "sources": results,
         "high_risk": False,
     }

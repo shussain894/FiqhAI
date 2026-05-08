@@ -108,7 +108,22 @@ def print_answer(result: dict):
     else:
         print(f"QUERY: {result['query']}")
         print("=" * 70)
-        print(result["answer"])
+
+        sa = result.get("structured_answer")
+        if sa:
+            print(f"\n## Short Answer\n{sa.short_answer}")
+            print(f"\n## Hanafi Ruling\n{sa.ruling}")
+            print(f"\n## Conditions / Exceptions\n{sa.conditions}")
+            print(f"\n## Source-Based Explanation\n{sa.explanation}")
+            print("\n## Citations")
+            for c in sa.citations:
+                print(f"  - {c}")
+            print(f"\n## Confidence\n{sa.confidence}")
+            print(f"\n## Note\n{sa.note}")
+        else:
+            # Fallback to raw text if parsing failed
+            print(result["answer"])
+
         print("\n--- Sources retrieved ---")
         for i, s in enumerate(result["sources"], 1):
             print(f"  [{i}] {s['source_title']} p.{s['page']} | {s['topic']} | score={s['score']}")
