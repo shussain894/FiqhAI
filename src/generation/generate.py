@@ -19,6 +19,7 @@ import ollama
 from dotenv import load_dotenv
 
 from src.generation.schema import parse_markdown_answer
+from src.retrieval.rewrite import rewrite_query
 
 load_dotenv()
 
@@ -141,22 +142,28 @@ def run_rag_query(
     if is_high_risk(query):
         return {
             "query": query,
+            "rewritten_query": None,
             "answer": HIGH_RISK_RESPONSE,
+            "structured_answer": None,
             "sources": [],
             "high_risk": True,
         }
 
-    # Step 2 — retrieve relevant chunks
-    results = retrieve(query, model, collection, top_k=top_k, topic_filter=topic_filter)
+    # Step 2 — rewrite query for better retrieval, keep original for generation
+    retrieval_query = rewrite_query(query, model_name=llm_model)
 
-    # Step 3 — format context for prompt
+    # Step 3 — retrieve relevant chunks using the rewritten query
+    results = retrieve(retrieval_query, model, collection, top_k=top_k, topic_filter=topic_filter)
+
+    # Step 4 — format context for prompt
     context = format_for_prompt(results)
 
-    # Step 4 — generate answer
+    # Step 5 — generate answer using the original query (not the rewritten one)
     answer = generate_answer(query, context, model_name=llm_model)
 
     return {
         "query": query,
+        "rewritten_query": retrieval_query,
         "answer": answer,
         "structured_answer": parse_markdown_answer(answer),
         "sources": results,

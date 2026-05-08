@@ -107,6 +107,8 @@ def print_answer(result: dict):
         print(result["answer"])
     else:
         print(f"QUERY: {result['query']}")
+        if result.get("rewritten_query") and result["rewritten_query"] != result["query"]:
+            print(f"RETRIEVAL QUERY: {result['rewritten_query']}")
         print("=" * 70)
 
         sa = result.get("structured_answer")
