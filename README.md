@@ -27,11 +27,15 @@ A naive RAG system embeds the user's question and finds the closest chunks by co
 1. **Vocabulary mismatch** — a short colloquial question shares few tokens with dense classical fiqh text
 2. **Cosine similarity is imprecise** — it finds chunks that are *topically nearby* but not necessarily *relevant to the question*
 
-FiqhAI addresses both with a three-stage retrieval pipeline:
+FiqhAI addresses both with a four-stage retrieval pipeline:
 
-### Stage 1 — Query rewriting
+### Stage 1 — Topic detection
 
-Before hitting the vector database, the user's question is rewritten by the LLM into a keyword-rich retrieval query that includes Arabic terms, Hanafi legal vocabulary, and related concepts.
+The query's topic is detected from keywords (Taharah, Salah, Sawm, Zakah, Usul) and ChromaDB is scoped to just that topic's chunks before searching. This is especially important for smaller topics like Sawm (132 chunks) which would otherwise compete against 2,400+ total chunks.
+
+### Stage 2 — Query rewriting
+
+The scoped query is rewritten by the LLM into a keyword-rich retrieval form that includes Arabic terms, Hanafi legal vocabulary, and related concepts.
 
 ```
 User:      "what breaks the fast?"
@@ -40,11 +44,11 @@ Retrieval: "fasting violations ramadan sawm najis ghusl tayammum haram fard wudu
 
 The original question is preserved for generation — only retrieval uses the expanded form.
 
-### Stage 2 — Bi-encoder retrieval
+### Stage 3 — Bi-encoder retrieval
 
-The rewritten query is embedded and matched against 2,400+ indexed chunks using cosine similarity (ChromaDB + all-MiniLM-L6-v2). This retrieves the top 10 candidates quickly.
+The rewritten query is embedded and matched against the scoped chunk subset using cosine similarity (ChromaDB + all-MiniLM-L6-v2). The top 15 candidates are retrieved quickly.
 
-### Stage 3 — Cross-encoder reranking
+### Stage 4 — Cross-encoder reranking
 
 A cross-encoder (`ms-marco-MiniLM-L-6-v2`) reads the original question and each candidate chunk *together*, scoring them for true relevance. The top 5 are kept for generation.
 
@@ -241,13 +245,22 @@ FiqhAI/
     retrieval/
       index.py                     # chunks → ChromaDB
       retrieve.py                  # query → top-k chunks (bi-encoder)
+      detect_topic.py              # query → topic label for scoped retrieval
       rewrite.py                   # query → retrieval-optimised query
       rerank.py                    # top-k candidates → reranked top-k (cross-encoder)
     generation/
       generate.py                  # full RAG pipeline
       schema.py                    # Pydantic answer schema + markdown parser
+    evaluation/
+      generate_eval.py             # generate candidate eval questions from corpus
+      run_eval.py                  # score pipeline against eval dataset
+    api/
+      app.py                       # FastAPI review dashboard (eval + live queries)
   prompts/
     system_prompt.txt              # system instructions for Gemma
+  data/
+    eval/
+      candidate_questions.jsonl    # 87 curated eval questions (manually reviewed)
   tests/                           # pytest test suite (85 tests)
 ```
 
@@ -273,7 +286,45 @@ Note: generation and rewrite tests require Ollama to be running with the configu
 | Vector DB | ChromaDB |
 | PDF extraction | PyMuPDF |
 | Schema validation | Pydantic |
+| API / frontend | FastAPI + uvicorn |
 | Testing | pytest |
+
+---
+
+## Evaluation results (Phase 2 baseline)
+
+Scored against 87 manually reviewed questions across 5 topics:
+
+| Metric | Score |
+|---|---|
+| Source hit rate | 83% |
+| Parse success | 100% |
+| Short answer filled | 100% |
+| High confidence | 33% |
+| Avg latency | 8.0s |
+
+Source hit rate by topic:
+
+| Topic | Hit rate |
+|---|---|
+| Taharah | 85% |
+| Salah | 81% |
+| Usul | 85% |
+| Zakah | 86% |
+| Sawm | 75% |
+
+To run the review dashboard:
+
+```bash
+python -m src.api.app
+# open http://localhost:8000
+```
+
+To re-run the evaluation:
+
+```bash
+python -m src.evaluation.run_eval
+```
 
 ---
 
@@ -282,7 +333,7 @@ Note: generation and rewrite tests require Ollama to be running with the configu
 | Phase | Status |
 |---|---|
 | Phase 1 — PDF ingestion, chunking, ChromaDB indexing, basic RAG | Complete |
-| Phase 2 — Query rewriting, reranking, structured outputs, eval dataset | In progress |
+| Phase 2 — Query rewriting, topic detection, reranking, structured outputs, eval dataset | Complete |
 | Phase 3 — Synthetic training data, LoRA fine-tuning, RAG vs fine-tuned comparison | Planned |
 
 ---
