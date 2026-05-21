@@ -19,6 +19,7 @@ import ollama
 from dotenv import load_dotenv
 
 from src.generation.schema import parse_markdown_answer
+from src.retrieval.detect_topic import detect_topic
 from src.retrieval.rerank import rerank
 from src.retrieval.rewrite import rewrite_query
 
@@ -154,23 +155,27 @@ def run_rag_query(
     # Step 2 — rewrite query for better retrieval, keep original for generation
     retrieval_query = rewrite_query(query, model_name=llm_model)
 
-    # Step 3 — retrieve a larger candidate set when reranking, otherwise top_k
-    candidate_k = top_k * 2 if reranker is not None else top_k
-    results = retrieve(retrieval_query, model, collection, top_k=candidate_k, topic_filter=topic_filter)
+    # Step 3 — detect topic for scoped retrieval (overrides explicit topic_filter if set)
+    effective_topic_filter = topic_filter or detect_topic(query)
 
-    # Step 4 — rerank candidates down to top_k (skipped if no reranker)
+    # Step 4 — retrieve a larger candidate set when reranking, otherwise top_k
+    candidate_k = top_k * 3 if reranker is not None else top_k
+    results = retrieve(retrieval_query, model, collection, top_k=candidate_k, topic_filter=effective_topic_filter)
+
+    # Step 5 — rerank candidates down to top_k (skipped if no reranker)
     if reranker is not None:
         results = rerank(query, results, reranker, top_k=top_k)
 
-    # Step 5 — format context for prompt
+    # Step 6 — format context for prompt
     context = format_for_prompt(results)
 
-    # Step 6 — generate answer using the original query (not the rewritten one)
+    # Step 7 — generate answer using the original query (not the rewritten one)
     answer = generate_answer(query, context, model_name=llm_model)
 
     return {
         "query": query,
         "rewritten_query": retrieval_query,
+        "topic_detected": effective_topic_filter,
         "answer": answer,
         "structured_answer": parse_markdown_answer(answer),
         "sources": results,

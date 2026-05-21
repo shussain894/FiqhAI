@@ -42,6 +42,7 @@ data/processed/extracted_text/*.json
 data/processed/cleaned_text/*.json
 data/chunks/*.jsonl
 data/qa/*.jsonl
+data/eval/eval_results.jsonl
 
 # ChromaDB persist directory
 chroma_db/
