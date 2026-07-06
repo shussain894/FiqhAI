@@ -29,7 +29,7 @@ OUTPUT_FILE = Path("data/eval/candidate_questions.jsonl")
 # How many candidate questions to generate per topic
 QUESTIONS_PER_TOPIC = 25
 
-TARGET_TOPICS = ["Taharah", "Salah", "Sawm", "Zakah", "Usul"]
+TARGET_TOPICS = ["Taharah", "Salah", "Sawm", "Zakah"]
 
 # Minimum chunk word count — very short chunks rarely yield good questions
 MIN_WORDS = 80
@@ -49,6 +49,12 @@ Passage from {source_title}, page {page} (topic: {topic}):
 Write only the question. No explanation, no numbering, no preamble."""
 
 
+def _is_english_source(chunk: dict) -> bool:
+    """Exclude turath.io Arabic-source chunks — Gemma2:2b cannot generate
+    reliable English questions from Arabic passages."""
+    return not chunk.get("file_name", "").startswith("turath_")
+
+
 def load_chunks_by_topic(chunks_file: Path) -> dict[str, list[dict]]:
     by_topic: dict[str, list[dict]] = {t: [] for t in TARGET_TOPICS}
     with open(chunks_file, encoding="utf-8") as f:
@@ -58,7 +64,7 @@ def load_chunks_by_topic(chunks_file: Path) -> dict[str, list[dict]]:
                 continue
             chunk = json.loads(line)
             topic = chunk.get("topic", "")
-            if topic in by_topic and chunk.get("word_count", 0) >= MIN_WORDS:
+            if topic in by_topic and chunk.get("word_count", 0) >= MIN_WORDS and _is_english_source(chunk):
                 by_topic[topic].append(chunk)
     return by_topic
 

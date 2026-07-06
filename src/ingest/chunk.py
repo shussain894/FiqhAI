@@ -42,34 +42,53 @@ TOPIC_KEYWORDS: dict[str, list[str]] = {
     "Taharah": [
         "wudu", "ablution", "ghusl", "purif", "tahara", "impure",
         "najis", "tayammum", "ritual bath", "water", "clean", "unclean",
-        "hadath", "janabah", "menstruat", "istinja"
+        "hadath", "janabah", "menstruat", "istinja",
+        # Arabic
+        "طهارة", "وضوء", "غسل", "نجاسة", "تيمم", "مياه", "حدث", "جنابة",
+        "استنجاء", "طاهر", "نجس", "حيض", "نفاس",
     ],
     "Salah": [
         "prayer", "salah", "salat", "rakah", "rakat", "qibla", "imam",
         "congregation", "prostrat", "bowing", "fajr", "dhuhr", "asr",
-        "maghrib", "isha", "adhan", "iqama", "witr", "sujud", "ruku"
+        "maghrib", "isha", "adhan", "iqama", "witr", "sujud", "ruku",
+        # Arabic
+        "صلاة", "ركعة", "قبلة", "إمام", "سجود", "ركوع", "فجر", "ظهر",
+        "عصر", "مغرب", "عشاء", "أذان", "إقامة", "وتر", "جماعة", "قراءة",
     ],
     "Sawm": [
         "fast", "sawm", "fasting", "ramadan", "iftar", "suhur",
-        "suhoor", "break the fast", "obligatory fast"
+        "suhoor", "break the fast", "obligatory fast",
+        # Arabic
+        "صوم", "صيام", "رمضان", "إفطار", "سحور", "اعتكاف",
     ],
     "Zakah": [
         "zakat", "zakah", "nisab", "charity", "alms", "poor due",
-        "wealth", "tithe", "eligible recipients", "sadaqah"
+        "wealth", "tithe", "eligible recipients", "sadaqah",
+        # Arabic
+        "زكاة", "نصاب", "صدقة", "زكاة الفطر", "فطرة", "عشر", "خراج",
     ],
     "Hajj": [
         "hajj", "umrah", "mecca", "makkah", "ihram", "pilgrimage",
-        "tawaf", "sa'i", "arafah", "kaaba"
+        "tawaf", "sa'i", "arafah", "kaaba",
+        # Arabic
+        "حج", "عمرة", "إحرام", "طواف", "سعي", "مكة", "عرفة", "منى",
+        "كعبة", "هدي", "أضحية",
     ],
     "Muamalat": [
         "trade", "sale", "contract", "transaction", "business",
-        "debt", "loan", "riba", "interest", "partnership"
+        "debt", "loan", "riba", "interest", "partnership",
+        # Arabic
+        "بيع", "شراء", "عقد", "ربا", "دين", "قرض", "شركة", "إجارة",
+        "رهن", "كفالة", "وكالة",
     ],
     "Usul": [
         "principle", "dalil", "qiyas", "ijma", "fard", "wajib",
         "sunnah", "makruh", "mubah", "haram", "halal", "obligatory",
         "permissible", "prohibited", "evidence", "ruling", "ijtihad",
-        "istihsan", "urf", "madhab"
+        "istihsan", "urf", "madhab",
+        # Arabic
+        "دليل", "قياس", "إجماع", "فرض", "واجب", "سنة", "مكروه", "مباح",
+        "حرام", "حلال", "اجتهاد", "استحسان", "عرف", "مذهب", "أصول",
     ],
 }
 
