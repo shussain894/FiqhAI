@@ -56,16 +56,16 @@ A cross-encoder (`ms-marco-MiniLM-L-6-v2`) reads the original question and each 
 
 ```
 Without reranking:
-  [1] Usul Al Shashi p.21  | Usul      | score=0.77  ← dhihar (irrelevant)
+  [1] Al Hidayah p.461     | Usul      | score=0.77  ← dhihar (irrelevant)
   [2] Al Hidayah p.76      | Salah     | score=0.75
-  [3] Usul Al Shashi p.68  | Muamalat  | score=0.75
+  [3] Mukhtasar Al Quduri p.68 | Muamalat | score=0.75
   [4] Al Hidayah p.58      | Taharah   | score=0.75
   [5] Al Hidayah p.461     | Usul      | score=0.74
 
 With reranking:
   [1] Al Hidayah p.76      | Salah     | score=0.77  rerank=3.10
-  [2] Usul Al Shashi p.138 | Salah     | score=0.72  rerank=2.86
-  [3] Ascent To Felicity p.40 | Taharah | score=0.72 rerank=2.59
+  [2] Ascent To Felicity p.138 | Salah | score=0.72  rerank=2.86
+  [3] Ascent To Felicity p.40  | Taharah | score=0.72 rerank=2.59
   [4] Al Hidayah p.58      | Taharah   | score=0.77  rerank=2.51
   [5] Al Hidayah p.58      | Usul      | score=0.74  rerank=0.23
 ```
@@ -97,7 +97,7 @@ prayer. The intention for prayer is important in this context.
 
 ## Citations
 - Al Hidayah, page 76
-- Usul Al Shashi, page 138
+- Ascent To Felicity, page 138
 - Ascent To Felicity, page 40
 
 ## Confidence
@@ -108,7 +108,7 @@ For complex personal cases, consult a qualified Hanafi scholar or local mufti.
 
 --- Sources retrieved ---
   [1] Al Hidayah p.76      | Salah    | score=0.7738 | rerank=3.0956
-  [2] Usul Al Shashi p.138 | Salah    | score=0.7177 | rerank=2.8649
+  [2] Ascent To Felicity p.138 | Salah | score=0.7177 | rerank=2.8649
   [3] Ascent To Felicity p.40 | Taharah | score=0.7217 | rerank=2.5939
 ```
 
@@ -291,27 +291,28 @@ Note: generation and rewrite tests require Ollama to be running with the configu
 
 ---
 
-## Evaluation results (Phase 2 baseline)
+## Evaluation results
 
-Scored against 87 manually reviewed questions across 5 topics:
+Scored against 100 questions across 4 topics (Taharah, Salah, Sawm, Zakah).
 
 | Metric | Score |
 |---|---|
-| Source hit rate | 83% |
+| Source hit rate | 68% |
 | Parse success | 100% |
-| Short answer filled | 100% |
-| High confidence | 33% |
-| Avg latency | 8.0s |
+| Short answer filled | 78% |
+| High confidence | 21% |
+| Avg latency | 8.4s |
 
 Source hit rate by topic:
 
 | Topic | Hit rate |
 |---|---|
-| Taharah | 85% |
-| Salah | 81% |
-| Usul | 85% |
-| Zakah | 86% |
-| Sawm | 75% |
+| Taharah | 48% |
+| Salah | 70% |
+| Sawm | 73% |
+| Zakah | 82% |
+
+> Note: these results were recorded during the Turath Arabic integration experiment (see Experiments section). The multilingual embedding model (`paraphrase-multilingual-MiniLM-L12-v2`) and Arabic chunks in the index suppressed Taharah performance. A clean re-evaluation against the English-only corpus is pending.
 
 To run the review dashboard:
 
@@ -325,6 +326,33 @@ To re-run the evaluation:
 ```bash
 python -m src.evaluation.run_eval
 ```
+
+---
+
+## Experiments
+
+### Arabic source integration via turath.io (June–July 2026) — not adopted
+
+We investigated expanding the corpus with classical Arabic Hanafi texts from the [turath.io](https://app.turath.io) library, which hosts thousands of Islamic books with a public REST API.
+
+**What we built:**
+- A Python client (`src/ingest/turath_client.py`) calling the `api.turath.io` endpoints
+- An ingestion script that fetched pages from 5 confirmed Hanafi fiqh books (cat_id=14) and saved them in the same format as our PDF-extracted texts
+- Switched the embedding model from `all-MiniLM-L6-v2` to `paraphrase-multilingual-MiniLM-L12-v2` to support cross-lingual retrieval
+- Added Arabic topic keywords to the chunk classifier
+- Resulted in a 9,714-chunk index (vs 2,222 from English PDFs alone)
+
+**What we found:**
+
+The integration surfaced a fundamental mismatch between the retrieval and generation layers:
+
+1. **Reranker is English-only.** The cross-encoder (`ms-marco-MiniLM-L-6-v2`) scores Arabic passages against English queries unreliably, so Arabic chunks were systematically demoted or discarded before reaching the prompt.
+
+2. **Gemma2:2b cannot use Arabic context.** Even when Arabic chunks survived reranking, the 2B model could not reliably translate or reason over classical Arabic fiqh text. Answers based on Arabic passages were consistently low-confidence or hallucinated.
+
+3. **Eval score dropped from 83% → 68% source hit rate.** Taharah was hit hardest (48%) because the Arabic Turath books are heavily Taharah-focused, so Arabic chunks displaced English ones in retrieval without adding generation value.
+
+**Decision:** Removed. The Arabic texts added noise at generation time without improving answer quality. The right path to Arabic source support would require either (a) a translation step at ingest time, or (b) a stronger multilingual LLM. Both are viable future directions.
 
 ---
 

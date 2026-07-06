@@ -143,7 +143,7 @@ def print_report(scores: list[dict]):
     by_topic: dict[str, list] = defaultdict(list)
     for s in not_blocked:
         by_topic[s["topic"]].append(s)
-    for topic in ["Taharah", "Salah", "Sawm", "Zakah", "Usul"]:
+    for topic in ["Taharah", "Salah", "Sawm", "Zakah"]:
         qs = by_topic.get(topic, [])
         if not qs:
             continue
